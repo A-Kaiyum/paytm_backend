@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PaytmController;
 use Illuminate\Support\Facades\Route;
 
 /*
