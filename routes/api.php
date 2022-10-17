@@ -13,3 +13,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('paytm-payment', [PaytmController::class, 'paymentNow']);
 Route::post('paytm-callback', [PaytmController::class, 'paytmCallback']);
 Route::get('paytm-status/{orderId}', [PaytmController::class, 'getPaytmStatus']);
+Route::post('txn-token-mobile', [PaytmController::class, 'txnTokenGenerate']);

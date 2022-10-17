@@ -87,6 +87,52 @@ class PaytmController extends Controller
         }
     }
 
+    // for mobile app
+
+    public function txnTokenGenerate()
+    {
+        $paytmParams = array();
+        $orderId = Str::orderedUuid();
+
+        $paytmParams["body"] = array(
+            "requestType"   => "Payment",
+            "mid"           => env('PAYTM_MERCHANT_ID'),
+            "websiteName"   => env('PAYTM_MERCHANT_WEBSITE'),
+            "orderId"       => $orderId,
+            "callbackUrl"   => "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID=" . $orderId,
+            "txnAmount"     => array(
+                "value"     => "1.00",
+                "currency"  => "INR",
+            ),
+            "userInfo"      => array(
+                "custId"    => "CUST_001",
+            ),
+        );
+
+        $checksum = PaytmChecksum::generateSignature(json_encode($paytmParams["body"]), env('PAYTM_MERCHANT_KEY'));
+
+
+        $paytmParams["head"] = array(
+            "signature"    => $checksum
+        );
+
+        $post_data = json_encode($paytmParams);
+
+        /* for Staging */
+        $url = "https://securegw-stage.paytm.in/theia/api/v1/initiateTransaction?mid=" . env('PAYTM_MERCHANT_ID') . "&orderId=" . $orderId;
+
+        /* for Production */
+        // $url = "https://securegw.paytm.in/theia/api/v1/initiateTransaction?mid=YOUR_MID_HERE&orderId=ORDERID_98765";
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        $response = curl_exec($ch);
+        return response()->json([json_decode($response), ["orderId" => $orderId]]);
+    }
+
     public function getPaytmStatus($orderId)
     {
         $paytmStatement =  Paytm::where('order_id', $orderId)->first();
